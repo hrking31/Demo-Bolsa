@@ -48,14 +48,14 @@ export default function App() {
       {!hasApiKey && (
         <p
           role="status"
-          className="animate-rise mt-6 rounded-xl bg-amber-100 px-4 py-3 text-sm text-amber-900"
+          className="animate-rise mt-6 rounded-xl border border-warn/30 bg-warn/10 px-4 py-3 text-sm text-warn"
         >
           Modo demostración: no hay una clave de API configurada, así que se
           muestran datos de ejemplo, no precios reales.
         </p>
       )}
 
-      <main className="mt-8 grid items-start gap-6 lg:mt-10 lg:grid-cols-[minmax(0,21rem)_minmax(0,1fr)] lg:gap-8">
+      <main className="mt-8 grid grid-cols-1 items-start gap-6 lg:mt-10 lg:grid-cols-[minmax(0,21rem)_minmax(0,1fr)] lg:gap-8">
         <ul aria-label="Acciones" className="space-y-1">
           {STOCKS.map((stock, index) => (
             <StockCard
@@ -69,7 +69,7 @@ export default function App() {
           ))}
         </ul>
 
-        <div ref={chartRef} className="scroll-mt-4">
+        <div ref={chartRef} className="min-w-0 scroll-mt-4">
           <StockChart symbol={selected.symbol} name={selected.name} />
         </div>
       </main>

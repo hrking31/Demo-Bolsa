@@ -83,7 +83,7 @@ function buildChart(points, currency, intraday, lineColor) {
         pointRadius: 0,
         pointHoverRadius: 5,
         pointHoverBorderWidth: 2,
-        pointHoverBackgroundColor: "#ffffff",
+        pointHoverBackgroundColor: colors.surface,
         pointHoverBorderColor: lineColor,
       },
     ],
@@ -99,7 +99,11 @@ function buildChart(points, currency, intraday, lineColor) {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: colors.ink,
+        backgroundColor: colors.raised,
+        borderColor: colors.line,
+        borderWidth: 1,
+        titleColor: colors.muted,
+        bodyColor: colors.ink,
         padding: 10,
         cornerRadius: 8,
         displayColors: false,
@@ -120,7 +124,7 @@ function buildChart(points, currency, intraday, lineColor) {
       x: {
         grid: { display: false },
         border: { display: false },
-        ticks: { maxTicksLimit: 6, maxRotation: 0 },
+        ticks: { maxTicksLimit: 6, maxRotation: 0, autoSkipPadding: 18 },
       },
       y: {
         position: "right",
@@ -177,7 +181,7 @@ export default function StockChart({ symbol, name }) {
   return (
     <section
       aria-labelledby="chart-title"
-      className="animate-rise rounded-2xl border border-line bg-surface p-5 shadow-sm sm:p-7"
+      className="animate-rise min-w-0 rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-7"
       style={{ animationDelay: "150ms" }}
     >
       <header className="flex flex-wrap items-start justify-between gap-4">
@@ -226,7 +230,7 @@ export default function StockChart({ symbol, name }) {
               onClick={() => setRangeId(r.id)}
               className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors duration-200 ${
                 r.id === rangeId
-                  ? "bg-ink text-surface"
+                  ? "bg-raised text-ink shadow-sm ring-1 ring-line"
                   : "text-muted hover:text-ink"
               }`}
             >
@@ -256,7 +260,7 @@ export default function StockChart({ symbol, name }) {
       <div className="graph-paper mt-6 h-64 rounded-xl p-2 sm:h-80 lg:h-[22rem]">
         {chart ? (
           <div
-            className={`h-full transition-opacity duration-300 ${
+            className={`relative h-full w-full min-w-0 transition-opacity duration-300 ${
               series.loading ? "opacity-50" : "opacity-100"
             }`}
           >
@@ -309,7 +313,7 @@ export default function StockChart({ symbol, name }) {
               type="button"
               onClick={series.refresh}
               disabled={series.loading}
-              className="rounded-full border border-line px-3 py-1 text-sm font-medium text-ink transition-colors hover:bg-paper disabled:opacity-50"
+              className="rounded-full border border-line px-3 py-1 text-sm font-medium text-ink transition-colors hover:bg-raised disabled:opacity-50"
             >
               {series.loading ? "Actualizando…" : "Actualizar"}
             </button>

@@ -4,17 +4,25 @@
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Bricolage Grotesque", "IBM Plex Sans", ui-sans-serif, sans-serif;
 
-  --color-paper: #eef2f0;
-  --color-surface: #ffffff;
-  --color-ink: #13212b;
-  --color-muted: #5b6b73;
-  --color-line: #d5deda;
-  --color-up: #0b7a53;
-  --color-down: #c2412d;
-  --color-accent: #2b50e0;
+  /* Tema oscuro inspirado en terminales de bolsa. */
+  --color-paper: #0b1220;
+  --color-surface: #111a2c;
+  --color-raised: #182338;
+  --color-ink: #e6edf6;
+  --color-muted: #8b9bb4;
+  --color-line: #1f2b40;
+  --color-grid: #16213a;
+  --color-up: #16c784;
+  --color-down: #f6465d;
+  --color-accent: #3b82f6;
+  --color-warn: #f0b90b;
 }
 
 @layer base {
+  :root {
+    color-scheme: dark;
+  }
+
   body {
     background-color: var(--color-paper);
     color: var(--color-ink);
@@ -29,12 +37,12 @@
 }
 
 @layer components {
-  /* Fondo de papel milimetrado detrás del gráfico principal. */
+  /* Retícula tenue detrás del gráfico principal, como en una terminal. */
   .graph-paper {
-    background-color: var(--color-surface);
+    background-color: var(--color-paper);
     background-image:
-      linear-gradient(#e6ece9 1px, transparent 1px),
-      linear-gradient(90deg, #e6ece9 1px, transparent 1px);
+      linear-gradient(var(--color-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
     background-size: 28px 28px;
     background-position: -1px -1px;
   }
@@ -53,7 +61,12 @@
 
   /* Silueta animada mientras cargan los datos. */
   .skeleton {
-    background: linear-gradient(90deg, #e2e9e5 25%, #f2f5f3 50%, #e2e9e5 75%);
+    background: linear-gradient(
+      90deg,
+      var(--color-raised) 25%,
+      var(--color-line) 50%,
+      var(--color-raised) 75%
+    );
     background-size: 200% 100%;
     animation: shimmer 1.4s linear infinite;
   }
