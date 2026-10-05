@@ -1,5 +1,7 @@
 # 📈 Demo Bolsa
 
+[![CI](https://github.com/hrking31/Demo-Bolsa/actions/workflows/ci.yml/badge.svg)](https://github.com/hrking31/Demo-Bolsa/actions/workflows/ci.yml)
+
 [Español](README.md) | **English**
 
 A demo of **integrating a financial REST API** ([Twelve Data](https://twelvedata.com/)): quotes and charts for four US stocks, with caching, rate-limit handling, error handling and **47 automated tests**.
@@ -41,7 +43,7 @@ On load, the app makes 5 requests: one daily series per stock and one intraday s
 npm test
 ```
 
-47 tests with **Vitest** and **Testing Library**. None of them call the real API: Twelve Data responses are mocked.
+47 tests with **Vitest** and **Testing Library**. None of them call the real API: Twelve Data responses are mocked. **GitHub Actions** runs linting, tests and the build on every push ([`ci.yml`](.github/workflows/ci.yml)).
 
 - **API layer:** request parameters, data order, cache and expiry, shared requests, every error code, unreadable responses, offline with and without a saved copy, blocked storage and no-key mode.
 - **`useTimeSeries` hook:** a late response for another stock never replaces the current one; "Refresh" forces a new request without clearing what's on screen.
@@ -59,7 +61,7 @@ npm test
 
 ## 🛠 Tech stack
 
-React 19 · Vite · Tailwind CSS 4 · Chart.js · i18next · Vitest · Testing Library · Firebase Hosting
+React 19 · Vite · Tailwind CSS 4 · Chart.js · i18next · Vitest · Testing Library · GitHub Actions · Firebase Hosting
 
 ## 🚀 Running it locally
 

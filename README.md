@@ -1,5 +1,7 @@
 # 📈 Demo Bolsa
 
+[![CI](https://github.com/hrking31/Demo-Bolsa/actions/workflows/ci.yml/badge.svg)](https://github.com/hrking31/Demo-Bolsa/actions/workflows/ci.yml)
+
 **Español** | [English](README.en.md)
 
 Demo de **integración con una API REST financiera** ([Twelve Data](https://twelvedata.com/)): cotizaciones y gráficos de cuatro acciones de EE. UU. con caché, control del límite de consultas, manejo de errores y **47 pruebas automatizadas**.
@@ -41,7 +43,7 @@ Al cargar, la app hace 5 consultas: una serie diaria por acción y una intradía
 npm test
 ```
 
-47 pruebas con **Vitest** y **Testing Library**. Ninguna llama a la API real: las respuestas de Twelve Data se simulan.
+47 pruebas con **Vitest** y **Testing Library**. Ninguna llama a la API real: las respuestas de Twelve Data se simulan. **GitHub Actions** ejecuta la revisión de código, las pruebas y la compilación en cada push ([`ci.yml`](.github/workflows/ci.yml)).
 
 - **Capa de API:** parámetros de la consulta, orden de los datos, caché y vencimiento, solicitudes compartidas, cada código de error, respuesta ilegible, sin conexión con y sin copia guardada, almacenamiento bloqueado y modo sin clave.
 - **Hook `useTimeSeries`:** una respuesta tardía de otra acción nunca reemplaza a la actual; "Actualizar" fuerza una consulta sin borrar lo visible.
@@ -59,7 +61,7 @@ npm test
 
 ## 🛠 Tecnologías
 
-React 19 · Vite · Tailwind CSS 4 · Chart.js · i18next · Vitest · Testing Library · Firebase Hosting
+React 19 · Vite · Tailwind CSS 4 · Chart.js · i18next · Vitest · Testing Library · GitHub Actions · Firebase Hosting
 
 ## 🚀 Cómo ejecutarla
 
