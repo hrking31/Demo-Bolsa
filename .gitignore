@@ -11,6 +11,11 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+
+# Firebase: caché de despliegue y plantilla antigua
+.firebase
+build
 
 # Editor directories and files
 .vscode/*
