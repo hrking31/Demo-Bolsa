@@ -10,8 +10,9 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+# Claves y configuración privada (.env.local, .env.*.local). El archivo .env sí
+# se versiona: solo contiene configuración pública.
 *.local
-.env
 
 # Firebase: caché de despliegue y plantilla antigua
 .firebase

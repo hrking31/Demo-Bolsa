@@ -75,16 +75,15 @@ Requirements: Node.js 20 or later.
 git clone https://github.com/hrking31/Demo-Bolsa.git
 cd Demo-Bolsa
 npm install
-cp .env.example .env.local
 npm run dev                  # http://localhost:5173
 ```
 
-In `.env.local`, fill in **one** option:
+No setup needed: [`.env`](.env) already points to the published proxy, so the app shows real data. To use another Worker or call Twelve Data directly, create `.env.local` from [`.env.example`](.env.example); it takes precedence over `.env`:
 
-- `VITE_API_PROXY_URL`: your Worker's URL (recommended; the key stays in Cloudflare).
+- `VITE_API_PROXY_URL`: your own Worker's URL (the key stays in Cloudflare).
 - `VITE_TWELVE_DATA_API_KEY`: a free [Twelve Data](https://twelvedata.com/) key to call the API directly (development only: it ends up in the browser).
 
-With neither, the app runs on sample data.
+With no configuration at all, the app runs on sample data.
 
 ### Proxy (Cloudflare Workers)
 

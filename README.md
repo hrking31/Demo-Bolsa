@@ -75,16 +75,15 @@ Requisitos: Node.js 20 o superior.
 git clone https://github.com/hrking31/Demo-Bolsa.git
 cd Demo-Bolsa
 npm install
-cp .env.example .env.local
 npm run dev                  # http://localhost:5173
 ```
 
-En `.env.local` completa **una** opción:
+No hace falta configurar nada: [`.env`](.env) ya apunta al intermediario publicado, así que la app muestra datos reales. Para usar otro Worker o llamar directo a Twelve Data, crea `.env.local` a partir de [`.env.example`](.env.example); tiene prioridad sobre `.env`:
 
-- `VITE_API_PROXY_URL`: dirección de tu Worker (recomendado; la clave queda en Cloudflare).
+- `VITE_API_PROXY_URL`: dirección de tu propio Worker (la clave queda en Cloudflare).
 - `VITE_TWELVE_DATA_API_KEY`: clave gratuita de [Twelve Data](https://twelvedata.com/) para llamar directo (solo desarrollo: queda visible en el navegador).
 
-Sin ninguna, la app funciona con datos de ejemplo.
+Sin ninguna configuración, la app funciona con datos de ejemplo.
 
 ### Intermediario (Cloudflare Workers)
 
