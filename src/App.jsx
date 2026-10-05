@@ -1,119 +1,104 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import StockCard from "./Components/StockCard/StockCard";
 import StockChart from "./Components/StockChart/StockChart";
+import MarketStatus from "./Components/MarketStatus/MarketStatus";
+import { hasApiKey } from "./services/twelveData";
+import { prefersReducedMotion } from "./utils/motion";
 
-const symbols = ["IBM", "AAPL", "MSFT", "GOOGL"];
-const DEFAULT_API_KEY = "demo";
+const STOCKS = [
+  { symbol: "IBM", name: "IBM Corp." },
+  { symbol: "AAPL", name: "Apple" },
+  { symbol: "MSFT", name: "Microsoft" },
+  { symbol: "GOOGL", name: "Alphabet" },
+];
 
 export default function App() {
-  const [selectedSymbol, setSelectedSymbol] = useState(null);
-  const [inputValue, setInputValue] = useState("");
-  const [apiKey, setApiKey] = useState(DEFAULT_API_KEY);
-  const [error, setError] = useState(null);
+  const [selectedSymbol, setSelectedSymbol] = useState(STOCKS[0].symbol);
+  const chartRef = useRef(null);
+  const selected = STOCKS.find((s) => s.symbol === selectedSymbol);
 
   const handleSelect = (symbol) => {
     setSelectedSymbol(symbol);
-    setError(null);
-  };
-
-  // Solo se aplica la clave cuando el usuario confirma (botón o Enter),
-  // y luego se vacía el campo para no dejarla expuesta en pantalla.
-  const handleApiKeySubmit = (e) => {
-    e.preventDefault();
-    setApiKey(inputValue.trim() || DEFAULT_API_KEY);
-    setInputValue("");
-    setError(null);
-    setSelectedSymbol(null);
+    // En pantallas angostas el gráfico queda debajo de la lista: se lleva a la vista.
+    if (window.matchMedia("(max-width: 1023px)").matches) {
+      requestAnimationFrame(() =>
+        chartRef.current?.scrollIntoView({
+          behavior: prefersReducedMotion() ? "auto" : "smooth",
+          block: "start",
+        })
+      );
+    }
   };
 
   return (
-    <div className="p-4 sm:p-6 bg-gray-100 min-h-screen">
-      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center">
-        Demo Bolsa
-      </h1>
-      <div className="mb-4 sm:mb-6 max-w-md mx-auto">
-        <div className="flex items-center space-x-2">
-          <label
-            htmlFor="apiKey"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Clave de API de Alpha Vantage
-          </label>
+    <div className="mx-auto min-h-screen max-w-6xl px-4 py-8 sm:px-6 lg:py-14">
+      <header className="animate-rise flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-4xl font-extrabold tracking-tight sm:text-6xl">
+            Demo Bolsa
+          </h1>
+          <p className="mt-2 max-w-prose text-muted">
+            Cotizaciones de cuatro acciones de EE. UU. Elige una para ver cómo
+            se movió su precio.
+          </p>
+        </div>
+        <MarketStatus />
+      </header>
+
+      {!hasApiKey && (
+        <p
+          role="status"
+          className="animate-rise mt-6 rounded-xl bg-amber-100 px-4 py-3 text-sm text-amber-900"
+        >
+          Modo demostración: no hay una clave de API configurada, así que se
+          muestran datos de ejemplo, no precios reales.
+        </p>
+      )}
+
+      <main className="mt-8 grid items-start gap-6 lg:mt-10 lg:grid-cols-[minmax(0,21rem)_minmax(0,1fr)] lg:gap-8">
+        <ul aria-label="Acciones" className="space-y-1">
+          {STOCKS.map((stock, index) => (
+            <StockCard
+              key={stock.symbol}
+              symbol={stock.symbol}
+              name={stock.name}
+              index={index}
+              selected={stock.symbol === selectedSymbol}
+              onSelect={handleSelect}
+            />
+          ))}
+        </ul>
+
+        <div ref={chartRef} className="scroll-mt-4">
+          <StockChart symbol={selected.symbol} name={selected.name} />
+        </div>
+      </main>
+
+      <footer className="mt-12 flex flex-wrap justify-between gap-2 border-t border-line pt-6 text-sm text-muted">
+        <p>
+          Datos de mercado de{" "}
           <a
-            href="https://www.alphavantage.co/support/#api-key"
+            href="https://twelvedata.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="underline text-blue-500"
+            className="underline underline-offset-2 hover:text-ink"
           >
-            Obtén tu clave aquí
+            Twelve Data
           </a>
-        </div>
-        <form onSubmit={handleApiKeySubmit} className="mt-1 flex gap-2">
-          <input
-            id="apiKey"
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Ingresa tu clave de API (o usa 'demo')"
-            className="p-2 border rounded w-full focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 whitespace-nowrap"
+          . Los precios pueden tener retraso.
+        </p>
+        <p>
+          Hecho por Hernando Rey.{" "}
+          <a
+            href="https://github.com/hrking31/Demo-Bolsa"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:text-ink"
           >
-            Enter
-          </button>
-        </form>
-        <p className="mt-1 text-xs text-gray-500">
-          {apiKey === DEFAULT_API_KEY
-            ? "Usando la clave de demostración."
-            : "Usando tu clave personalizada."}
+            Ver el código en GitHub
+          </a>
         </p>
-      </div>
-      {error && (
-        <p className="text-red-500 text-center mb-4 sm:mb-6 text-sm sm:text-base line-clamp-2">
-          {error.includes("rate limit") ? (
-            <>
-              {error} Visita{" "}
-              <a
-                href="https://www.alphavantage.co/premium/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline text-blue-500"
-              >
-                Alpha Vantage Premium
-              </a>{" "}
-              para más solicitudes.
-            </>
-          ) : (
-            error
-          )}
-        </p>
-      )}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 md:grid-cols-4 sm:gap-4 mb-6">
-        {symbols.map((sym, index) => (
-          <StockCard
-            key={sym}
-            symbol={sym}
-            onSelect={handleSelect}
-            selected={selectedSymbol === sym}
-            apiKey={apiKey}
-            fetchDelay={index * 1000}
-          />
-        ))}
-      </div>
-      {!selectedSymbol && (
-        <p className="text-center text-gray-600 mb-6 text-sm sm:text-base">
-          Toca una tarjeta para ver los precios intradiarios
-        </p>
-      )}
-      {selectedSymbol && (
-        <StockChart
-          symbol={selectedSymbol}
-          apiKey={apiKey}
-          setError={setError}
-        />
-      )}
+      </footer>
     </div>
   );
 }

@@ -1,173 +1,86 @@
-# 📈 Demo Bolsa de Valores
+# 📈 Demo Bolsa
 
-Una aplicación web profesional y responsiva para visualizar datos en tiempo real de la bolsa de valores, construida con **React**, **Tailwind CSS**, y **Chart.js**, utilizando la API gratuita de Alpha Vantage. Esta demo muestra habilidades avanzadas en desarrollo frontend, integración de APIs, y visualización de datos interactiva. La aplicación está hospedada en **Firebase Hosting** para un acceso rápido y confiable.
+Aplicación web para consultar cotizaciones y gráficos de acciones de EE. UU. (IBM, Apple, Microsoft y Alphabet), construida con **React**, **Tailwind CSS** y **Chart.js**, consumiendo la API REST de **Twelve Data**.
 
-🔗 **[Ver Demo en Firebase Hosting](https://demobolsa-31.web.app/)** 
+🔗 **[Ver la demo en vivo](https://demobolsa-31.web.app/)**
 
-## ✨ Funcionalidades Principales
+## ✨ Funcionalidades
 
-- **Visualización de Múltiples Acciones**: Muestra datos en tiempo real para acciones populares como Apple (AAPL), Microsoft (MSFT), Google (GOOGL), e IBM (IBM).
-- **Tarjetas Interactivas**:
-  - 💰 **Precio Actual**: Muestra el precio más reciente de cada acción usando la API `GLOBAL_QUOTE`.
-  - 📈 **Cambio Porcentual**: Colores dinámicos (verde para subidas, rojo para bajadas) para una lectura rápida.
-  - 📊 **Mini Gráfico Intradiario**: Visualiza la evolución de precios en intervalos de 5 minutos en un gráfico compacto.
-  - 🖱️ **Interactividad Intuitiva**: Toca o haz clic en una tarjeta para ver detalles históricos, con pistas visuales como bordes animados y efectos hover.
-- **Gráfico Principal Interactivo**:
-  - 📅 Muestra la evolución intradiaria de la acción seleccionada (intervalos de 5 minutos) usando `TIME_SERIES_INTRADAY`.
-  - 🛠️ Configuración responsive con Chart.js, optimizada para móviles y escritorios.
-  - 🔄 Botón "Actualizar" para recargar datos manualmente, evitando superar los límites de la API.
-- **Manejo de Claves de API**:
-  - 🔑 Soporte para clave `demo` de Alpha Vantage o una clave personalizada ingresada por el usuario.
-  - 🚨 Manejo robusto de errores, como límites de solicitudes (5/min con `demo`, 25/día con clave gratuita).
-- **Diseño Moderno y Responsive**:
-  - 🎨 Construido con **Tailwind CSS** para un diseño limpio y adaptable.
-  - 📱 Optimizado para móviles: tarjetas en cuadrícula de 2 columnas, gráficos con altura dinámica, y tamaños de texto ajustados.
-- **Hospedaje en Firebase Hosting**:
-  - ☁️ Desplegado en Firebase para un acceso rápido, seguro, y escalable.
-- **Accesibilidad**:
-  - ♿ Soporte para navegación por teclado en las tarjetas (Enter o Espacio para seleccionar).
+- **Lista de acciones** con precio actual, variación frente al cierre anterior y mini gráfico de los últimos 30 días (SVG propio, animado).
+- **Gráfico detallado** de la acción elegida, con dos periodos: intradía cada 5 minutos o último mes. Incluye tooltip, línea guía que sigue al cursor, relleno degradado y máximo, mínimo y cierre anterior.
+- **Estado del mercado** de Nueva York (abierto o cerrado) calculado con la zona horaria `America/New_York`.
+- **Diseño responsive** y accesible: navegación por teclado, foco visible, contraste AA y animaciones que respetan la preferencia del sistema de reducir movimiento.
 
-## 🛠 Tecnologías Utilizadas
+## 🧠 Decisiones técnicas sobre la API
 
-- **React**: Biblioteca frontend para construir interfaces dinámicas.
-- **Tailwind CSS**: Framework CSS para un diseño moderno y responsive.
-- **Chart.js y react-chartjs-2**: Visualización de gráficos interactivos.
-- **Fetch API**: Conexión con la API de Alpha Vantage para datos en tiempo real.
-- **Firebase Hosting**: Plataforma de hospedaje para un despliegue rápido y confiable.
+El plan gratuito de Twelve Data permite 8 consultas por minuto y 800 al día. La app está pensada para no agotarlas y para no mostrar nunca una pantalla rota:
 
-## 🚀 Cómo Usar
+| Problema | Solución |
+|---|---|
+| Consultas repetidas al recargar | Las respuestas se guardan en `localStorage` con tiempo de expiración (1 h para datos diarios, 10 min para intradía). |
+| Dos componentes piden lo mismo a la vez | Las solicitudes en curso se comparten: una sola llamada HTTP por símbolo e intervalo. |
+| Respuestas lentas que llegan tarde | El hook solo acepta respuestas que coinciden con el símbolo e intervalo actuales. |
+| Límite alcanzado, clave inválida o sin red | Mensaje claro y botón **Reintentar**. Se muestra la última copia guardada o, si no hay, datos de ejemplo con una etiqueta visible. |
+| Twelve Data responde errores con HTTP 200 | Se revisan `status` y `code` del cuerpo de la respuesta, no solo el código HTTP. |
 
-### Prerrequisitos
-- Node.js (versión 18 o superior)
-- Una clave de API de [Alpha Vantage](https://www.alphavantage.co/support/#api-key) (puedes usar `demo` para pruebas limitadas)
+Al cargar, la app hace 5 consultas: 4 series diarias (una por acción) y 1 intradía. El periodo "1 mes" reutiliza los datos diarios ya descargados.
 
-### Instalación
-1. Clona el repositorio:
-   ```bash
-   git clone <https://github.com/hrking31/Demo-Bolsa.git>
-   cd demo-bolsa
+## 🛠 Tecnologías
 
+React 19, Vite, Tailwind CSS 4, Chart.js 4 con react-chartjs-2, Fetch API y Firebase Hosting.
 
-2. Instala las dependencias:
-   ```bash
-   npm install
+## 🚀 Cómo ejecutarla
 
+Requisitos: Node.js 18 o superior y una clave gratuita de [Twelve Data](https://twelvedata.com/).
 
-3. Inicia el servidor de desarrollo:
-   ```bash
-   npm run dev
-
-4. Abre http://localhost:3000 en tu navegador.
-
-Configuración de la API
-
-Ingresa tu clave de API de Alpha Vantage en el campo correspondiente en la aplicación.
-La clave demo está configurada por defecto, pero tiene un límite de 5 solicitudes por minuto.
-Para más solicitudes, obtén una clave gratuita o premium en Alpha Vantage.
-
-Despliegue en Firebase Hosting
-
-1. Instala Firebase CLI:
-   ```bash
-   npm install -g firebase-tools
-
-
-2. Inicia sesión en Firebase:
-   ```bash
-   firebase login
-
-
-3. Inicializa Firebase en el proyecto:
-   ```bash
-   firebase init hosting
-
-
-Selecciona tu proyecto de Firebase.
-Configura public como la carpeta de despliegue (normalmente build).
-
-
-4. Construye la aplicación:
-   ```bash   
-   npm run build
-
-
-5. Despliega a Firebase Hosting:
-   ```bash
-   firebase deploy
-
-
-Accede a la URL proporcionada (por ejemplo, https://your-project-id.web.app).
-
-📋 Estructura del Proyecto
-   ```plaintext
-   demo-bolsa/
-   ├── src/
-   │   ├── Components/
-   │   │   ├── StockCard/
-   │   │   │   └── StockCard.jsx    # Tarjetas con precio, cambio y mini gráfico
-   │   │   └── StockChart/
-   │   │       └── StockChart.jsx   # Gráfico principal de precios intradiarios
-   │   ├── App.jsx                  # Componente principal
-   │   ├── index.js                 # Punto de entrada
-   │   └── styles.css               # Estilos de Tailwind CSS
-   ├── public/
-   │   └── index.html               # Plantilla HTML
-   ├── package.json                 # Dependencias y scripts
-   └── README.md                    # Este archivo
+```bash
+git clone https://github.com/hrking31/Demo-Bolsa.git
+cd demo-bolsa
+npm install
+cp .env.example .env.local   # luego pega tu clave en .env.local
+npm run dev
 ```
-🛑 Notas sobre la API
 
-Clave demo: Limitada a 5 solicitudes por minuto. Las 4 tarjetas realizan 8 consultas (2 por tarjeta: GLOBAL_QUOTE y TIME_SERIES_INTRADAY), y el gráfico principal realiza 1. Usa el botón "Actualizar" para evitar superar el límite.
-Clave gratuita: Limitada a 25 solicitudes por día (por ejemplo, con la clave 8N2X3670MC5CL7WB). Si ves el mensaje "We have detected your API key as 8N2X3670MC5CL7WB...", espera hasta el próximo día o usa una nueva clave.
-Plan Premium: Recomendado para uso intensivo. Visita Alpha Vantage Premium.
+Abre http://localhost:5173. Sin clave, la app funciona igual con datos de ejemplo.
 
-📱 Optimización para Móviles
+## ☁️ Despliegue en Firebase Hosting
 
-Diseño Responsive:
-Tarjetas en cuadrícula de 2 columnas en móviles, 4 en escritorios.
-Gráfico principal con altura dinámica (250px en móviles, 400px en escritorios) y maintainAspectRatio: false.
-Textos más pequeños en móviles (text-xs, text-sm) para evitar desbordamiento.
+```bash
+npm run build      # usa la clave de .env.local
+firebase deploy
+```
 
+> La clave queda incluida en el código que descarga el navegador, algo habitual en demos con claves gratuitas. En producción, las llamadas deberían pasar por un servidor intermedio (por ejemplo, una Cloud Function) que guarde la clave.
 
-Interactividad:
-Texto "Toca para ver precios intradiarios" en las tarjetas.
-Borde animado (animate-pulse) en la tarjeta seleccionada.
-Botones "Actualizar" con tamaño adecuado para toque.
+## 📁 Estructura
 
+```plaintext
+src/
+├── App.jsx                       # Página: encabezado, lista y gráfico
+├── services/
+│   ├── twelveData.js             # Llamadas a la API, caché y manejo de errores
+│   └── sampleData.js             # Datos de ejemplo cuando la API no está disponible
+├── hooks/
+│   ├── useTimeSeries.js          # Carga de datos con reintento y control de respuestas viejas
+│   └── useAnimatedNumber.js      # Animación del precio
+├── Components/
+│   ├── StockCard/                # Fila de la lista con precio y mini gráfico
+│   ├── StockChart/               # Gráfico detallado
+│   ├── Sparkline/                # Mini gráfico en SVG
+│   ├── MarketStatus/             # Mercado abierto o cerrado
+│   └── SourceBadge/              # Aviso de datos guardados o de ejemplo
+└── utils/                        # Formatos de precio y fecha, horario del mercado
+```
 
-Rendimiento:
-Consultas escalonadas con retrasos (1 segundo por tarjeta) para no superar el límite de la API.
+## 🔜 Próximos pasos
 
+- Precios en vivo con el WebSocket de Finnhub.
+- Buscador de acciones.
+- Pruebas automáticas (Vitest) de la capa de API, incluidos los errores.
+- Servidor intermedio para ocultar la clave.
 
+## 📄 Licencia
 
-🐛 Solución de Problemas
+MIT.
 
-Gráfico no visible en móviles:
-Verifica que las dependencias (react-chartjs-2, chart.js) estén instaladas.
-Revisa la consola para errores de API (por ejemplo, "Error Message": "Invalid API call").
-Asegúrate de que el contenedor del gráfico tenga espacio suficiente.
-
-
-Límite de API alcanzado:
-Usa una nueva clave gratuita o espera hasta que se reinicie el límite.
-Reduce las consultas usando el botón "Actualizar" manualmente.
-
-
-Errores de diseño:
-Confirma que Tailwind CSS está configurado correctamente (npm install tailwindcss y styles.css configurado).
-
-
-
-🚀 Mejoras Futuras
-
-Agregar más símbolos de acciones dinámicamente.
-Implementar almacenamiento en caché para reducir solicitudes a la API.
-Añadir filtros para intervalos de tiempo (por ejemplo, 1h, 1d, 1w).
-Incorporar temas oscuro/claro para personalización.
-
-📄 Licencia
-MIT License. Siéntete libre de usar y modificar este proyecto.
-🙌 Contribuciones
-¡Las contribuciones son bienvenidas! Abre un issue o un pull request en el repositorio.
-
-Desarrollado con 💻 por Hernando Rey Para comentarios o preguntas, contáctame en hrking31@gmail.com o abre un issue en el repositorio.
+Desarrollado por **Hernando Rey**. Contacto: hrking31@gmail.com

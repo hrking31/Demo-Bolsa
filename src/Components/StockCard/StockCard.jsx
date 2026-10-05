@@ -1,168 +1,87 @@
-import { useState, useEffect } from "react";
-import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-} from "chart.js";
+import Sparkline from "../Sparkline/Sparkline";
+import SourceBadge from "../SourceBadge/SourceBadge";
+import { useTimeSeries } from "../../hooks/useTimeSeries";
+import { DAILY } from "../../services/twelveData";
+import { formatPercent, formatPrice, percentChange } from "../../utils/format";
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement);
+export default function StockCard({ symbol, name, selected, onSelect, index }) {
+  const { data, loading, error, source, refresh } = useTimeSeries(symbol, DAILY);
 
-export default function StockCard({
-  symbol,
-  onSelect,
-  selected,
-  apiKey,
-  fetchDelay,
-}) {
-  const [price, setPrice] = useState(null);
-  const [change, setChange] = useState(null);
-  const [miniData, setMiniData] = useState({ labels: [], datasets: [] });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Consulta GLOBAL_QUOTE
-      const urlQuote = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`;
-      const resQuote = await fetch(urlQuote);
-      const dataQuote = await resQuote.json();
-      if (dataQuote["Error Message"] || dataQuote["Information"]) {
-        setError(dataQuote["Error Message"] || dataQuote["Information"]);
-        setLoading(false);
-        return;
-      }
-      const quote = dataQuote["Global Quote"];
-      if (!quote || !quote["05. price"]) {
-        setError("No se encontraron datos de cotización.");
-        setLoading(false);
-        return;
-      }
-      setPrice(parseFloat(quote["05. price"]));
-      setChange(parseFloat(quote["10. change percent"]));
-
-      // Consulta TIME_SERIES_INTRADAY
-      const urlHistory = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=5min&apikey=${apiKey}`;
-      const resHistory = await fetch(urlHistory);
-      const dataHistory = await resHistory.json();
-      if (dataHistory["Error Message"] || dataHistory["Information"]) {
-        setError(dataHistory["Error Message"] || dataHistory["Information"]);
-        setLoading(false);
-        return;
-      }
-      const timeSeries = dataHistory["Time Series (5min)"];
-      if (!timeSeries) {
-        setError("No se encontraron datos históricos.");
-        setLoading(false);
-        return;
-      }
-      const labels = Object.keys(timeSeries).reverse().slice(0, 20);
-      const values = labels.map((t) => parseFloat(timeSeries[t]["4. close"]));
-      setMiniData({
-        labels,
-        datasets: [
-          {
-            data: values,
-            borderColor: "#34D399",
-            fill: false,
-            tension: 0.3,
-          },
-        ],
-      });
-    } catch (error) {
-      setError("Error al conectar con la API.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(fetchData, fetchDelay || 0);
-    return () => clearTimeout(timer);
-  }, [symbol, apiKey, fetchDelay]);
+  const points = data?.points ?? [];
+  const last = points.at(-1);
+  const prev = points.at(-2);
+  const change = last && prev ? percentChange(prev.close, last.close) : null;
+  const trendClass =
+    change === null ? "text-muted" : change >= 0 ? "text-up" : "text-down";
+  const delay = index * 90;
 
   return (
-    <div className="flex flex-col items-center">
-      <div
+    <li className="animate-rise" style={{ animationDelay: `${delay}ms` }}>
+      <button
+        type="button"
         onClick={() => onSelect(symbol)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            onSelect(symbol);
-          }
-        }}
-        role="button"
-        tabIndex={0}
-        className={`bg-white shadow-md rounded-lg p-3 sm:p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-blue-500 border-2 ${
-          selected ? "border-blue-500 animate-pulse" : "border-transparent"
-        } w-full max-w-[150px] sm:max-w-xs`}
+        aria-pressed={selected}
+        className={`relative grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors duration-200 sm:gap-4 ${
+          selected ? "bg-surface shadow-sm" : "hover:bg-surface/60"
+        }`}
       >
-        <h2 className="font-bold text-base sm:text-lg text-center">{symbol}</h2>
-        {loading && (
-          <p className="text-xs sm:text-sm text-gray-500 text-center">
-            Cargando...
-          </p>
+        <span
+          aria-hidden="true"
+          className={`absolute inset-y-3 left-0 w-1 rounded-full bg-accent transition-transform duration-300 ${
+            selected ? "scale-y-100" : "scale-y-0"
+          }`}
+        />
+
+        <span className="min-w-0">
+          <span className="block font-display text-lg font-semibold leading-tight">
+            {symbol}
+          </span>
+          <span className="block truncate text-sm text-muted">{name}</span>
+        </span>
+
+        {data ? (
+          <Sparkline
+            values={points.map((p) => p.close)}
+            className={trendClass}
+            delay={delay + 250}
+          />
+        ) : (
+          <span className="skeleton block h-8 w-24 rounded" />
         )}
-        {!loading && !error && price !== null && (
-          <p
-            className={`text-base sm:text-xl text-center ${
-              change >= 0 ? "text-green-500" : "text-red-500"
-            }`}
-          >
-            ${price.toFixed(2)} ({change.toFixed(2)}%)
-          </p>
-        )}
-        {!loading && !error && miniData.labels.length > 0 && (
-          <div className="h-16 sm:h-20 mt-2">
-            <Line
-              data={miniData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { x: { display: false }, y: { display: false } },
-              }}
-            />
-          </div>
-        )}
-        <p className="text-xs text-gray-500 text-center mt-1 sm:mt-2">
-          Toca para ver precios intradiarios
-        </p>
-      </div>
-      {error && (
-        <p className="text-red-500 text-xs text-center mt-2 max-w-[150px] sm:max-w-xs line-clamp-2">
-          {error.includes("rate limit") ? (
+
+        <span className="min-w-20 text-right tabular-nums">
+          {data && last ? (
             <>
-              Límite de API alcanzado. Visita{" "}
-              <a
-                href="https://www.alphavantage.co/premium/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline text-blue-500"
-              >
-                Alpha Vantage
-              </a>
+              <span className="block font-medium">
+                {formatPrice(last.close, data.currency)}
+              </span>
+              <span className={`block text-sm ${trendClass}`}>
+                {change === null ? "—" : formatPercent(change)}
+              </span>
             </>
           ) : (
-            error
+            <>
+              <span className="skeleton ml-auto block h-5 w-20 rounded" />
+              <span className="skeleton mt-1 ml-auto block h-4 w-14 rounded" />
+            </>
           )}
+        </span>
+      </button>
+
+      {error && (
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 pt-1 pb-2 text-xs text-down">
+          <SourceBadge source={source} />
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={refresh}
+            disabled={loading}
+            className="font-medium underline underline-offset-2 disabled:opacity-50"
+          >
+            Reintentar
+          </button>
         </p>
       )}
-      {!loading && !error && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            fetchData();
-          }}
-          className="mt-2 text-xs sm:text-sm text-blue-500 hover:underline px-2 py-1"
-        >
-          Actualizar
-        </button>
-      )}
-    </div>
+    </li>
   );
 }
