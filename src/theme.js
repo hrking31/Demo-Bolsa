@@ -1,12 +1,25 @@
-// Colores que usa Chart.js (dibuja en canvas y no lee clases de Tailwind).
-// Deben coincidir con los definidos en @theme dentro de index.css.
-export const colors = {
-  ink: "#e6edf6",
-  muted: "#8b9bb4",
-  surface: "#111a2c",
-  raised: "#182338",
-  line: "#1f2b40",
-  up: "#16c784",
-  down: "#f6465d",
-  guide: "#5b6b85",
-};
+// Chart.js dibuja en canvas y no lee clases de Tailwind: toma los colores de
+// las variables CSS del tema activo (definidas en index.css), así quedan
+// definidos en un solo lugar.
+const NAMES = ["ink", "muted", "surface", "raised", "line", "up", "down", "guide"];
+
+export function getChartColors() {
+  const styles = getComputedStyle(document.documentElement);
+  return Object.fromEntries(
+    NAMES.map((name) => [name, styles.getPropertyValue(`--color-${name}`).trim()])
+  );
+}
+
+let probe;
+
+// Devuelve el color con transparencia. Acepta cualquier formato CSS que
+// entienda el canvas (hex corto o largo, rgb, nombres).
+export function withAlpha(color, alpha) {
+  probe ??= document.createElement("canvas").getContext("2d");
+  probe.fillStyle = "#000";
+  probe.fillStyle = color;
+  const hex = probe.fillStyle;
+  if (!hex.startsWith("#")) return hex;
+  const n = parseInt(hex.slice(1, 7), 16);
+  return `rgba(${n >> 16}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}

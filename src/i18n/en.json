@@ -1,0 +1,66 @@
+{
+  "meta": {
+    "description": "US stock quotes and charts built with React, Chart.js and the Twelve Data API."
+  },
+  "header": {
+    "intro": "Quotes for four US stocks. Pick one to see how its price moved."
+  },
+  "demoMode": "Demo mode: no API key is configured, so sample data is shown instead of real prices.",
+  "stocks": {
+    "list": "Stocks"
+  },
+  "market": {
+    "open": "Market open",
+    "closed": "Market closed",
+    "hours": "Regular New York Stock Exchange hours (9:30 a.m. to 4:00 p.m. ET), holidays not included"
+  },
+  "theme": {
+    "toLight": "Switch to light mode",
+    "toDark": "Switch to dark mode"
+  },
+  "language": {
+    "switch": "Ver en español"
+  },
+  "chart": {
+    "range": "Chart period",
+    "range1D": "1 day",
+    "range1M": "1 month",
+    "vsPrevClose": "vs. previous close",
+    "lastMonth": "over the last month",
+    "label": "{{name}} price chart",
+    "tooltipTime": "{{date}}, {{time}}",
+    "high": "High",
+    "low": "Low",
+    "prevClose": "Previous close",
+    "session": "Session of {{date}}, New York time",
+    "nyTime": "New York time",
+    "dailyClose": "Close of each trading day",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing…"
+  },
+  "source": {
+    "sample": "Sample data",
+    "cache": "Saved data"
+  },
+  "errors": {
+    "retry": "Retry",
+    "rateLimit": "The API request limit was reached. Try again in a minute.",
+    "invalidKey": "The API key is invalid or doesn't have access to this data.",
+    "notFound": "No data was found for this symbol.",
+    "network": "Couldn't connect to the API. Check your connection.",
+    "unexpected": "Unexpected API error."
+  },
+  "contact": {
+    "title": "Contact",
+    "github": "Hernando Rey on GitHub",
+    "linkedin": "Hernando Rey on LinkedIn",
+    "email": "Email {{email}}"
+  },
+  "footer": {
+    "dataFrom": "Data from",
+    "delay": "; prices may be delayed",
+    "code": "Code on GitHub",
+    "developedBy": "Developed by",
+    "crafted": "Crafted with love and coffee"
+  }
+}

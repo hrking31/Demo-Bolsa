@@ -16,14 +16,15 @@ export const formatPercent = (value) =>
 export const percentChange = (from, to) => ((to - from) / from) * 100;
 
 // Las fechas llegan como "AAAA-MM-DD" o "AAAA-MM-DD HH:mm:ss" (hora de Nueva York).
+// En inglés se usa el orden de EE. UU. (mes/día); en español, día/mes.
 export const formatTime = (datetime) => datetime.slice(11, 16);
 
-export function formatDate(datetime) {
+export function formatDate(datetime, lang = "es") {
   const [y, m, d] = datetime.slice(0, 10).split("-");
-  return `${d}/${m}/${y}`;
+  return lang === "en" ? `${m}/${d}/${y}` : `${d}/${m}/${y}`;
 }
 
-export function formatShortDate(datetime) {
+export function formatShortDate(datetime, lang = "es") {
   const [, m, d] = datetime.slice(0, 10).split("-");
-  return `${d}/${m}`;
+  return lang === "en" ? `${m}/${d}` : `${d}/${m}`;
 }

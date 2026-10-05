@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -13,7 +14,7 @@ import SourceBadge from "../SourceBadge/SourceBadge";
 import { useTimeSeries } from "../../hooks/useTimeSeries";
 import { useAnimatedNumber } from "../../hooks/useAnimatedNumber";
 import { DAILY, INTRADAY, hasApiKey } from "../../services/twelveData";
-import { colors } from "../../theme";
+import { getChartColors, withAlpha } from "../../theme";
 import {
   formatDate,
   formatPercent,
@@ -33,24 +34,37 @@ ChartJS.register(
   Tooltip
 );
 ChartJS.defaults.font.family = '"IBM Plex Sans", system-ui, sans-serif';
-ChartJS.defaults.color = colors.muted;
 
 const RANGES = [
-  { id: "1D", label: "1 día", preset: INTRADAY },
-  { id: "1M", label: "1 mes", preset: DAILY },
+  { id: "1D", labelKey: "chart.range1D", preset: INTRADAY },
+  { id: "1M", labelKey: "chart.range1M", preset: DAILY },
 ];
 
+// Etiqueta corta en celular (1D / 1M, como en las plataformas de trading) y
+// completa desde sm; las dos se anuncian igual a los lectores de pantalla.
+function RangeLabel({ id, label }) {
+  return (
+    <>
+      <span aria-hidden="true" className="sm:hidden">
+        {id}
+      </span>
+      <span className="sr-only sm:not-sr-only">{label}</span>
+    </>
+  );
+}
+
 // Línea vertical punteada que sigue al cursor sobre el gráfico.
+// Su color llega por options.plugins.crosshair.color.
 const crosshair = {
   id: "crosshair",
-  afterDatasetsDraw(chart) {
+  afterDatasetsDraw(chart, _args, opts) {
     const active = chart.tooltip?.getActiveElements();
     if (!active?.length) return;
     const { ctx, chartArea } = chart;
     const x = active[0].element.x;
     ctx.save();
     ctx.setLineDash([4, 4]);
-    ctx.strokeStyle = colors.guide;
+    ctx.strokeStyle = opts.color;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(x, chartArea.top);
@@ -60,10 +74,13 @@ const crosshair = {
   },
 };
 
-function buildChart(points, currency, intraday, lineColor) {
+function buildChart({ points, currency, intraday, isUp, t, lang }) {
+  // Se leen en cada render para seguir el tema activo (claro u oscuro).
+  const colors = getChartColors();
+  const lineColor = isUp ? colors.up : colors.down;
   const data = {
     labels: points.map((p) =>
-      intraday ? formatTime(p.time) : formatShortDate(p.time)
+      intraday ? formatTime(p.time) : formatShortDate(p.time, lang)
     ),
     datasets: [
       {
@@ -76,8 +93,8 @@ function buildChart(points, currency, intraday, lineColor) {
           const { ctx, chartArea } = chart;
           if (!chartArea) return "transparent";
           const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-          gradient.addColorStop(0, `${lineColor}33`);
-          gradient.addColorStop(1, `${lineColor}00`);
+          gradient.addColorStop(0, withAlpha(lineColor, 0.2));
+          gradient.addColorStop(1, withAlpha(lineColor, 0));
           return gradient;
         },
         pointRadius: 0,
@@ -98,6 +115,7 @@ function buildChart(points, currency, intraday, lineColor) {
     interaction: { mode: "index", intersect: false },
     plugins: {
       legend: { display: false },
+      crosshair: { color: colors.guide },
       tooltip: {
         backgroundColor: colors.raised,
         borderColor: colors.line,
@@ -113,8 +131,11 @@ function buildChart(points, currency, intraday, lineColor) {
           title: ([item]) => {
             const { time } = points[item.dataIndex];
             return intraday
-              ? `${formatDate(time)}, ${formatTime(time)} h`
-              : formatDate(time);
+              ? t("chart.tooltipTime", {
+                  date: formatDate(time, lang),
+                  time: formatTime(time),
+                })
+              : formatDate(time, lang);
           },
           label: (item) => formatPrice(item.parsed.y, currency),
         },
@@ -124,13 +145,22 @@ function buildChart(points, currency, intraday, lineColor) {
       x: {
         grid: { display: false },
         border: { display: false },
-        ticks: { maxTicksLimit: 6, maxRotation: 0, autoSkipPadding: 18 },
+        ticks: {
+          color: colors.muted,
+          maxTicksLimit: 6,
+          maxRotation: 0,
+          autoSkipPadding: 18,
+        },
       },
       y: {
         position: "right",
         grid: { display: false },
         border: { display: false },
-        ticks: { maxTicksLimit: 5, callback: (v) => formatPrice(v, currency) },
+        ticks: {
+          color: colors.muted,
+          maxTicksLimit: 5,
+          callback: (v) => formatPrice(v, currency),
+        },
       },
     },
   };
@@ -139,6 +169,8 @@ function buildChart(points, currency, intraday, lineColor) {
 }
 
 export default function StockChart({ symbol, name }) {
+  const { t, i18n } = useTranslation();
+  const lang = i18n.resolvedLanguage;
   const [rangeId, setRangeId] = useState("1D");
   const range = RANGES.find((r) => r.id === rangeId);
   const intraday = range.preset === INTRADAY;
@@ -171,7 +203,7 @@ export default function StockChart({ symbol, name }) {
   const isUp = (change ?? 0) >= 0;
   const chart =
     points.length > 1
-      ? buildChart(points, currency, intraday, isUp ? colors.up : colors.down)
+      ? buildChart({ points, currency, intraday, isUp, t, lang })
       : null;
 
   const high = points.length ? Math.max(...points.map((p) => p.high)) : null;
@@ -181,83 +213,88 @@ export default function StockChart({ symbol, name }) {
   return (
     <section
       aria-labelledby="chart-title"
-      className="animate-rise min-w-0 rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-7"
+      className="animate-rise min-w-0 rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6"
       style={{ animationDelay: "150ms" }}
     >
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 id="chart-title" className="font-display text-2xl font-bold">
+      <header>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <h2
+              id="chart-title"
+              className="truncate font-display text-xl font-bold sm:text-2xl"
+            >
               {name}
             </h2>
             <span className="text-muted">{symbol}</span>
             <SourceBadge source={source} />
           </div>
 
-          <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            {animatedPrice != null ? (
-              <span className="font-display text-4xl font-bold tracking-tight tabular-nums sm:text-5xl">
-                {formatPrice(animatedPrice, currency)}
-              </span>
-            ) : (
-              <span className="skeleton block h-12 w-44 rounded-lg" />
-            )}
-            {change !== null && (
-              <span
-                className={`text-base font-medium tabular-nums ${
-                  isUp ? "text-up" : "text-down"
+          <div
+            role="group"
+            aria-label={t("chart.range")}
+            className="inline-flex shrink-0 rounded-full bg-paper p-1"
+          >
+            {RANGES.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                aria-pressed={r.id === rangeId}
+                onClick={() => setRangeId(r.id)}
+                className={`rounded-full px-3 py-1 text-sm font-medium transition-colors duration-200 sm:px-4 ${
+                  r.id === rangeId
+                    ? "bg-raised text-ink shadow-sm ring-1 ring-line"
+                    : "text-muted hover:text-ink"
                 }`}
               >
-                {formatPercent(change)}{" "}
-                <span className="font-normal text-muted">
-                  {intraday ? "frente al cierre anterior" : "en el último mes"}
-                </span>
-              </span>
-            )}
+                <RangeLabel id={r.id} label={t(r.labelKey)} />
+              </button>
+            ))}
           </div>
         </div>
 
-        <div
-          role="group"
-          aria-label="Periodo del gráfico"
-          className="inline-flex rounded-full bg-paper p-1"
-        >
-          {RANGES.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              aria-pressed={r.id === rangeId}
-              onClick={() => setRangeId(r.id)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors duration-200 ${
-                r.id === rangeId
-                  ? "bg-raised text-ink shadow-sm ring-1 ring-line"
-                  : "text-muted hover:text-ink"
+        <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+          {animatedPrice != null ? (
+            <span className="font-display text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">
+              {formatPrice(animatedPrice, currency)}
+            </span>
+          ) : (
+            <span className="skeleton block h-10 w-40 rounded-lg" />
+          )}
+          {change !== null && (
+            <span
+              className={`text-sm font-medium tabular-nums sm:text-base ${
+                isUp ? "text-up" : "text-down"
               }`}
             >
-              {r.label}
-            </button>
-          ))}
+              {formatPercent(change)}{" "}
+              <span className="font-normal text-muted">
+                {intraday ? t("chart.vsPrevClose") : t("chart.lastMonth")}
+              </span>
+            </span>
+          )}
         </div>
       </header>
 
       {series.error && (
         <div
           role="status"
-          className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-down/10 px-3 py-2 text-sm text-down"
+          className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-down/10 px-3 py-2 text-sm text-down"
         >
-          <span>{series.error}</span>
+          <span>{t(series.error)}</span>
           <button
             type="button"
             onClick={series.refresh}
             disabled={series.loading}
             className="font-medium underline underline-offset-2 disabled:opacity-50"
           >
-            Reintentar
+            {t("errors.retry")}
           </button>
         </div>
       )}
 
-      <div className="graph-paper mt-6 h-64 rounded-xl p-2 sm:h-80 lg:h-[22rem]">
+      {/* La altura se adapta a la pantalla para evitar el scroll: crece en
+          pantallas altas y se encoge hasta un mínimo legible en las bajas. */}
+      <div className="graph-paper mt-3 h-[clamp(11rem,calc(100dvh_-_36rem),20rem)] rounded-xl p-2 sm:mt-4 sm:h-[clamp(11rem,calc(100dvh_-_48.5rem),22rem)] lg:h-[clamp(12rem,calc(100dvh_-_30rem),30rem)]">
         {chart ? (
           <div
             className={`relative h-full w-full min-w-0 transition-opacity duration-300 ${
@@ -269,7 +306,7 @@ export default function StockChart({ symbol, name }) {
               data={chart.data}
               options={chart.options}
               plugins={[crosshair]}
-              aria-label={`Gráfico de precios de ${name}`}
+              aria-label={t("chart.label", { name })}
               role="img"
             />
           </div>
@@ -278,35 +315,37 @@ export default function StockChart({ symbol, name }) {
         )}
       </div>
 
-      <footer className="mt-5 flex flex-wrap items-end justify-between gap-4">
-        <dl className="grid grid-cols-3 gap-x-6 gap-y-1 text-sm sm:gap-x-10">
+      <footer className="mt-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:mt-4">
+        <dl className="grid grid-cols-3 gap-x-6 text-sm sm:gap-x-10">
           <div>
-            <dt className="text-muted">Máximo</dt>
+            <dt className="text-xs text-muted sm:text-sm">{t("chart.high")}</dt>
             <dd className="font-medium tabular-nums">
               {high != null ? formatPrice(high, currency) : "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-muted">Mínimo</dt>
+            <dt className="text-xs text-muted sm:text-sm">{t("chart.low")}</dt>
             <dd className="font-medium tabular-nums">
               {low != null ? formatPrice(low, currency) : "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-muted">Cierre anterior</dt>
+            <dt className="text-xs text-muted sm:text-sm">
+              {t("chart.prevClose")}
+            </dt>
             <dd className="font-medium tabular-nums">
               {prev ? formatPrice(prev.close, currency) : "—"}
             </dd>
           </div>
         </dl>
 
-        <div className="flex items-center gap-4 text-xs text-muted">
+        <div className="flex items-center gap-3 text-xs text-muted">
           <span>
             {intraday
               ? points.length
-                ? `Sesión del ${formatDate(points[0].time)}, cada 5 min, hora de Nueva York`
-                : "Cada 5 min, hora de Nueva York"
-              : "Cierre de cada día hábil"}
+                ? t("chart.session", { date: formatDate(points[0].time, lang) })
+                : t("chart.nyTime")
+              : t("chart.dailyClose")}
           </span>
           {hasApiKey && (
             <button
@@ -315,7 +354,7 @@ export default function StockChart({ symbol, name }) {
               disabled={series.loading}
               className="rounded-full border border-line px-3 py-1 text-sm font-medium text-ink transition-colors hover:bg-raised disabled:opacity-50"
             >
-              {series.loading ? "Actualizando…" : "Actualizar"}
+              {series.loading ? t("chart.refreshing") : t("chart.refresh")}
             </button>
           )}
         </div>

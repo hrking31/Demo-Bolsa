@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { isUsMarketOpen } from "../../utils/market";
 
 export default function MarketStatus() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(() => isUsMarketOpen());
 
   useEffect(() => {
@@ -12,7 +14,7 @@ export default function MarketStatus() {
   return (
     <p
       className="flex items-center gap-2 text-sm text-muted"
-      title="Horario regular de la bolsa de Nueva York (9:30 a 16:00 ET), sin contar festivos"
+      title={t("market.hours")}
     >
       <span className="relative flex size-2.5">
         {open && (
@@ -24,7 +26,7 @@ export default function MarketStatus() {
           }`}
         />
       </span>
-      {open ? "Mercado abierto" : "Mercado cerrado"}
+      {open ? t("market.open") : t("market.closed")}
     </p>
   );
 }

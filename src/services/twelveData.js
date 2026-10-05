@@ -45,17 +45,13 @@ function writeCache(key, data) {
   }
 }
 
-function friendlyMessage(code, message) {
-  if (code === 429) {
-    return "Se alcanzó el límite de consultas de la API. Intenta de nuevo en un minuto.";
-  }
-  if (code === 401 || code === 403) {
-    return "La clave de API no es válida o no tiene acceso a estos datos.";
-  }
-  if (code === 400 || code === 404) {
-    return "No se encontraron datos para este símbolo.";
-  }
-  return message || "Error inesperado de la API.";
+// Los errores se expresan como claves de traducción (src/i18n/*.json), para
+// que la interfaz los muestre en el idioma activo.
+function errorKey(code) {
+  if (code === 429) return "errors.rateLimit";
+  if (code === 401 || code === 403) return "errors.invalidKey";
+  if (code === 400 || code === 404) return "errors.notFound";
+  return "errors.unexpected";
 }
 
 async function requestTimeSeries(symbol, { interval, outputsize }) {
@@ -70,14 +66,14 @@ async function requestTimeSeries(symbol, { interval, outputsize }) {
   try {
     res = await fetch(`${BASE_URL}/time_series?${params}`);
   } catch {
-    throw new ApiError("No se pudo conectar con la API. Revisa tu conexión.", "NETWORK");
+    throw new ApiError("errors.network", "NETWORK");
   }
 
   // Twelve Data responde los errores con HTTP 200 y { status: "error", code, message }.
   const body = await res.json().catch(() => null);
   if (!res.ok || !body || body.status === "error") {
     const code = body?.code ?? res.status;
-    throw new ApiError(friendlyMessage(code, body?.message), code);
+    throw new ApiError(errorKey(code), code);
   }
 
   // La API entrega los datos del más reciente al más antiguo; se invierten
@@ -93,7 +89,7 @@ async function requestTimeSeries(symbol, { interval, outputsize }) {
     .reverse();
 
   if (points.length === 0) {
-    throw new ApiError("No se encontraron datos para este símbolo.", "EMPTY");
+    throw new ApiError("errors.notFound", "EMPTY");
   }
 
   return { symbol, points, currency: body.meta?.currency ?? "USD" };
@@ -122,6 +118,8 @@ async function fetchTimeSeries(symbol, preset, force) {
 /**
  * Obtiene una serie de precios y nunca rechaza: si la API falla, devuelve
  * la última copia guardada o, en su defecto, datos de ejemplo.
+ *
+ * `error` es una clave de traducción (por ejemplo "errors.rateLimit").
  *
  * @returns {Promise<{ data, source: "api" | "cache" | "sample", error: string | null }>}
  */

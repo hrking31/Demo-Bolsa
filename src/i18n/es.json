@@ -1,0 +1,66 @@
+{
+  "meta": {
+    "description": "Cotizaciones y gráficos de acciones de EE. UU. con React, Chart.js y la API de Twelve Data."
+  },
+  "header": {
+    "intro": "Cotizaciones de cuatro acciones de EE. UU. Elige una para ver cómo se movió su precio."
+  },
+  "demoMode": "Modo demostración: no hay una clave de API configurada, así que se muestran datos de ejemplo, no precios reales.",
+  "stocks": {
+    "list": "Acciones"
+  },
+  "market": {
+    "open": "Mercado abierto",
+    "closed": "Mercado cerrado",
+    "hours": "Horario regular de la bolsa de Nueva York (9:30 a 16:00 ET), sin contar festivos"
+  },
+  "theme": {
+    "toLight": "Activar modo claro",
+    "toDark": "Activar modo oscuro"
+  },
+  "language": {
+    "switch": "Read in English"
+  },
+  "chart": {
+    "range": "Periodo del gráfico",
+    "range1D": "1 día",
+    "range1M": "1 mes",
+    "vsPrevClose": "frente al cierre anterior",
+    "lastMonth": "en el último mes",
+    "label": "Gráfico de precios de {{name}}",
+    "tooltipTime": "{{date}}, {{time}} h",
+    "high": "Máximo",
+    "low": "Mínimo",
+    "prevClose": "Cierre anterior",
+    "session": "Sesión del {{date}}, hora de Nueva York",
+    "nyTime": "Hora de Nueva York",
+    "dailyClose": "Cierre de cada día hábil",
+    "refresh": "Actualizar",
+    "refreshing": "Actualizando…"
+  },
+  "source": {
+    "sample": "Datos de ejemplo",
+    "cache": "Datos guardados"
+  },
+  "errors": {
+    "retry": "Reintentar",
+    "rateLimit": "Se alcanzó el límite de consultas de la API. Intenta de nuevo en un minuto.",
+    "invalidKey": "La clave de API no es válida o no tiene acceso a estos datos.",
+    "notFound": "No se encontraron datos para este símbolo.",
+    "network": "No se pudo conectar con la API. Revisa tu conexión.",
+    "unexpected": "Error inesperado de la API."
+  },
+  "contact": {
+    "title": "Contacto",
+    "github": "GitHub de Hernando Rey",
+    "linkedin": "LinkedIn de Hernando Rey",
+    "email": "Escribir a {{email}}"
+  },
+  "footer": {
+    "dataFrom": "Datos de",
+    "delay": "; pueden tener retraso",
+    "code": "Código en GitHub",
+    "developedBy": "Desarrollado por",
+    "crafted": "Hecho con amor y café"
+  }
+}
