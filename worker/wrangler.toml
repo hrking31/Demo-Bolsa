@@ -1,0 +1,8 @@
+# Configuración del intermediario en Cloudflare Workers.
+# Se puede publicar desde el panel web de Cloudflare (pegando src/index.js) o
+# con Wrangler: `npx wrangler deploy` dentro de esta carpeta.
+# La clave NO va aquí: se guarda como secreto con el nombre TWELVE_DATA_API_KEY
+# (panel: Settings → Variables and Secrets, o `npx wrangler secret put TWELVE_DATA_API_KEY`).
+name = "demo-bolsa-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"

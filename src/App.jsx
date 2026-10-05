@@ -7,7 +7,7 @@ import ThemeToggle from "./Components/ThemeToggle/ThemeToggle";
 import LanguageSwitcher from "./Components/LanguageSwitcher/LanguageSwitcher";
 import ContactLinks from "./Components/ContactLinks/ContactLinks";
 import { useTheme } from "./hooks/useTheme";
-import { hasApiKey } from "./services/twelveData";
+import { isApiConfigured } from "./services/twelveData";
 import { prefersReducedMotion } from "./utils/motion";
 
 const STOCKS = [
@@ -62,7 +62,7 @@ export default function App() {
         </div>
       </header>
 
-      {!hasApiKey && (
+      {!isApiConfigured && (
         <p
           role="status"
           className="animate-rise mt-4 rounded-xl border border-warn/30 bg-warn/10 px-4 py-2 text-sm text-warn"

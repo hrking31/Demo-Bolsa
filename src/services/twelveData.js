@@ -1,10 +1,17 @@
 import { getSampleSeries } from "./sampleData";
 
-const BASE_URL = "https://api.twelvedata.com";
+// Dos formas de llegar a Twelve Data:
+// - VITE_API_PROXY_URL: el intermediario de worker/ (Cloudflare), que guarda la
+//   clave en secreto. Es lo que usa la versión publicada.
+// - VITE_TWELVE_DATA_API_KEY: llamada directa con la clave (queda visible en el
+//   navegador). Útil para desarrollo sin intermediario.
+const PROXY_URL = import.meta.env.VITE_API_PROXY_URL?.replace(/\/+$/, "");
 const API_KEY = import.meta.env.VITE_TWELVE_DATA_API_KEY;
+const BASE_URL = PROXY_URL || "https://api.twelvedata.com";
 const CACHE_PREFIX = "demo-bolsa:";
 
-export const hasApiKey = Boolean(API_KEY);
+// Sin ninguna de las dos, la app muestra datos de ejemplo.
+export const isApiConfigured = Boolean(PROXY_URL || API_KEY);
 
 // Configuraciones de consulta. Son constantes del módulo para que sirvan
 // como dependencias estables en los hooks.
@@ -59,8 +66,9 @@ async function requestTimeSeries(symbol, { interval, outputsize }) {
     symbol,
     interval,
     outputsize: String(outputsize),
-    apikey: API_KEY,
   });
+  // Con intermediario, la clave la agrega el Worker.
+  if (!PROXY_URL) params.set("apikey", API_KEY);
 
   let res;
   try {
@@ -124,7 +132,7 @@ async function fetchTimeSeries(symbol, preset, force) {
  * @returns {Promise<{ data, source: "api" | "cache" | "sample", error: string | null }>}
  */
 export async function loadSeries(symbol, preset, { force = false } = {}) {
-  if (!hasApiKey) {
+  if (!isApiConfigured) {
     return {
       data: getSampleSeries(symbol, preset),
       source: "sample",

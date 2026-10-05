@@ -13,7 +13,7 @@ import {
 import SourceBadge from "../SourceBadge/SourceBadge";
 import { useTimeSeries } from "../../hooks/useTimeSeries";
 import { useAnimatedNumber } from "../../hooks/useAnimatedNumber";
-import { DAILY, INTRADAY, hasApiKey } from "../../services/twelveData";
+import { DAILY, INTRADAY, isApiConfigured } from "../../services/twelveData";
 import { getChartColors, withAlpha } from "../../theme";
 import {
   formatDate,
@@ -347,7 +347,7 @@ export default function StockChart({ symbol, name }) {
                 : t("chart.nyTime")
               : t("chart.dailyClose")}
           </span>
-          {hasApiKey && (
+          {isApiConfigured && (
             <button
               type="button"
               onClick={series.refresh}

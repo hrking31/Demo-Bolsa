@@ -31,9 +31,10 @@ function memoryStorage() {
 
 // Carga el módulo de nuevo en cada prueba: la clave se lee al importarlo y
 // las solicitudes en curso viven en el módulo.
-async function cargarServicio(apiKey = "clave-de-prueba") {
+async function cargarServicio(apiKey = "clave-de-prueba", proxyUrl = "") {
   vi.resetModules();
   vi.stubEnv("VITE_TWELVE_DATA_API_KEY", apiKey);
+  vi.stubEnv("VITE_API_PROXY_URL", proxyUrl);
   return import("./twelveData");
 }
 
@@ -204,13 +205,49 @@ describe("loadSeries cuando la API falla", () => {
   });
 });
 
-describe("sin clave de API", () => {
-  test("no llama a la API y muestra datos de ejemplo sin error", async () => {
-    const { loadSeries, DAILY, hasApiKey } = await cargarServicio("");
+describe("con el intermediario de Cloudflare", () => {
+  const PROXY = "https://demo-bolsa-api.ejemplo.workers.dev";
+
+  test("llama al intermediario y nunca envía una clave desde el navegador", async () => {
+    const { loadSeries, DAILY, isApiConfigured } = await cargarServicio("", `${PROXY}/`);
+    fetch.mockResolvedValue(respuesta(serieIBM));
 
     const result = await loadSeries("IBM", DAILY);
 
-    expect(hasApiKey).toBe(false);
+    const url = new URL(fetch.mock.calls[0][0]);
+    expect(isApiConfigured).toBe(true);
+    expect(url.origin + url.pathname).toBe(`${PROXY}/time_series`);
+    expect(url.searchParams.has("apikey")).toBe(false);
+    expect(result.source).toBe("api");
+  });
+
+  test("aunque exista una clave local, con intermediario no la envía", async () => {
+    const { loadSeries, DAILY } = await cargarServicio("clave-de-prueba", PROXY);
+    fetch.mockResolvedValue(respuesta(serieIBM));
+
+    await loadSeries("IBM", DAILY);
+
+    expect(fetch.mock.calls[0][0]).not.toContain("clave-de-prueba");
+  });
+
+  test("entiende los errores del intermediario (por ejemplo, 403 por dominio no permitido)", async () => {
+    const { loadSeries, DAILY } = await cargarServicio("", PROXY);
+    fetch.mockResolvedValue(respuesta({ status: "error", code: 403 }, 403));
+
+    const result = await loadSeries("IBM", DAILY);
+
+    expect(result.error).toBe("errors.invalidKey");
+    expect(result.source).toBe("sample");
+  });
+});
+
+describe("sin clave de API", () => {
+  test("no llama a la API y muestra datos de ejemplo sin error", async () => {
+    const { loadSeries, DAILY, isApiConfigured } = await cargarServicio("");
+
+    const result = await loadSeries("IBM", DAILY);
+
+    expect(isApiConfigured).toBe(false);
     expect(fetch).not.toHaveBeenCalled();
     expect(result).toMatchObject({ source: "sample", error: null });
   });
